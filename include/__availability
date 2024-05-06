@@ -166,7 +166,7 @@
     // This controls whether the library claims to provide a default verbose
     // termination function, and consequently whether the headers will try
     // to use it when the mechanism isn't overriden at compile-time.
-// #   define _LIBCPP_AVAILABILITY_HAS_NO_VERBOSE_ABORT
+#   define _LIBCPP_AVAILABILITY_HAS_NO_VERBOSE_ABORT
 #   define _LIBCPP_AVAILABILITY_VERBOSE_ABORT
 
     // This controls the availability of the C++17 std::pmr library,
