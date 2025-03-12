@@ -16,6 +16,39 @@
 #  pragma GCC system_header
 #endif
 
+
+
+#  if _LIBCPP_AVAILABILITY_HAS_VERBOSE_ABORT
+
+namespace uc_log {
+template<int Line, typename Filename, typename Expr>
+extern void log_assert();
+}
+
+#define INTERNAL_abort_lambda(x)                                  \
+    []() __attribute__((__noreturn__)) {                          \
+        if(__builtin_is_constant_evaluated()) {                   \
+            int DO_NOT_USE_see_assert[1];                         \
+            DO_NOT_USE_see_assert[1] = 0;                         \
+        } else {                                                  \
+            uc_log::log_assert<                                   \
+              __LINE__,                                           \
+              decltype([]() {                                     \
+                  constexpr auto f{__FILE_NAME__};                \
+                  return f;                                       \
+              }),                                                 \
+              decltype([]() {                                     \
+                  constexpr auto e{"abort(" #x ")"};              \
+                  return e;                                       \
+              })>();                                              \
+            while(true) {                                         \
+                asm("bkpt 5" : : :);                              \
+            }                                                     \
+        }                                                         \
+    }                                                             \
+    ()
+#endif
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 // This function should never be called directly from the code -- it should only be called through
@@ -42,7 +75,9 @@ _LIBCPP_ATTRIBUTE_FORMAT(__printf__, 1, 2) void __libcpp_verbose_abort(const cha
 void __use(const char*, ...);
 #    define _LIBCPP_VERBOSE_ABORT(...) (decltype(::std::__use(__VA_ARGS__))(), __builtin_abort())
 #  else
-#    define _LIBCPP_VERBOSE_ABORT(...) ::std::__libcpp_verbose_abort(__VA_ARGS__)
+
+
+#    define _LIBCPP_VERBOSE_ABORT(msg, ...) INTERNAL_abort_lambda(msg)
 #  endif
 
 #endif // !defined(_LIBCPP_VERBOSE_ABORT)
