@@ -1,0 +1,74 @@
+// -*- C++ -*-
+//===----------------------------------------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP___ASSERTION_HANDLER
+#define _LIBCPP___ASSERTION_HANDLER
+
+#if __cplusplus < 201103L && defined(_LIBCPP_USE_FROZEN_CXX03_HEADERS)
+#  include <__cxx03/__config>
+#  include <__cxx03/__verbose_abort>
+#else
+#  include <__config>
+#  include <__verbose_abort>
+#endif
+
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#  pragma GCC system_header
+#endif
+
+#if _LIBCPP_HARDENING_MODE == _LIBCPP_HARDENING_MODE_DEBUG
+
+namespace uc_log {
+template<int Line, typename Filename, typename Expr>
+extern void log_assert();
+}
+
+#define INTERNAL_assertion_lambda(x)                              \
+    []() __attribute__((__noreturn__)) {                          \
+        if(__builtin_is_constant_evaluated()) {                   \
+            int DO_NOT_USE_see_assert[1];                         \
+            DO_NOT_USE_see_assert[1] = 0;                         \
+        } else {                                                  \
+            uc_log::log_assert<                                   \
+              __LINE__,                                           \
+              decltype([]() {                                     \
+                  constexpr auto f{__FILE_NAME__};                \
+                  return f;                                       \
+              }),                                                 \
+              decltype([]() {                                     \
+                  constexpr auto e{"assertion(" #x ")"};          \
+                  return e;                                       \
+              })>();                                              \
+            while(true) {                                         \
+                asm("bkpt 5" : : :);                              \
+            }                                                     \
+        }                                                         \
+    }                                                             \
+    ()
+
+#  define _LIBCPP_ASSERTION_HANDLER(message) INTERNAL_assertion_lambda(x)
+
+#else
+
+#  if __has_builtin(__builtin_verbose_trap)
+// AppleClang shipped a slightly different version of __builtin_verbose_trap from the upstream
+// version before upstream Clang actually got the builtin.
+// TODO: Remove once AppleClang supports the two-arguments version of the builtin.
+#    if defined(_LIBCPP_APPLE_CLANG_VER) && _LIBCPP_APPLE_CLANG_VER < 1700
+#      define _LIBCPP_ASSERTION_HANDLER(message) __builtin_verbose_trap(message)
+#    else
+#      define _LIBCPP_ASSERTION_HANDLER(message) __builtin_verbose_trap("libc++", message)
+#    endif
+#  else
+#    define _LIBCPP_ASSERTION_HANDLER(message) ((void)message, __builtin_trap())
+#  endif
+
+#endif // _LIBCPP_HARDENING_MODE == _LIBCPP_HARDENING_MODE_DEBUG
+
+#endif // _LIBCPP___ASSERTION_HANDLER

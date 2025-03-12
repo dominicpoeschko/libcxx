@@ -19,26 +19,25 @@ Macros:
 #include <__assert>   // all public C++ headers provide the assertion handler
 #include <__config>
 //#include <assert.h>
-#include <string_view>
 namespace uc_log {
-template<std::uint32_t Line, typename Filename, typename Expr>
+template<int Line, typename Filename, typename Expr>
 extern void log_assert();
 }
 
 #define INTERNAL_assert_lambda(x)                                 \
     []() __attribute__((__noreturn__)) {                          \
-        if(std::is_constant_evaluated()) {                        \
+        if(__builtin_is_constant_evaluated()) {                   \
             int DO_NOT_USE_see_assert[1];                         \
             DO_NOT_USE_see_assert[1] = 0;                         \
         } else {                                                  \
             uc_log::log_assert<                                   \
               __LINE__,                                           \
               decltype([]() {                                     \
-                  constexpr std::string_view f{__FILE_NAME__};    \
+                  constexpr auto f{__FILE_NAME__};                \
                   return f;                                       \
               }),                                                 \
               decltype([]() {                                     \
-                  constexpr std::string_view e{"assert(" #x ")"}; \
+                  constexpr auto e{"assert(" #x ")"};             \
                   return e;                                       \
               })>();                                              \
             while(true) {                                         \
