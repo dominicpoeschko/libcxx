@@ -16,8 +16,6 @@
 #  pragma GCC system_header
 #endif
 
-
-
 #  if _LIBCPP_AVAILABILITY_HAS_VERBOSE_ABORT
 
 namespace uc_log {
@@ -51,16 +49,10 @@ extern void log_assert();
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if defined(_LIBCPP_VERBOSE_ABORT_NOT_NOEXCEPT)
-#  define _LIBCPP_VERBOSE_ABORT_NOEXCEPT
-#else
-#  define _LIBCPP_VERBOSE_ABORT_NOEXCEPT _NOEXCEPT
-#endif
-
 // This function should never be called directly from the code -- it should only be called through
 // the _LIBCPP_VERBOSE_ABORT macro.
 [[__noreturn__]] _LIBCPP_AVAILABILITY_VERBOSE_ABORT _LIBCPP_OVERRIDABLE_FUNC_VIS _LIBCPP_ATTRIBUTE_FORMAT(
-    __printf__, 1, 2) void __libcpp_verbose_abort(const char* __format, ...) _LIBCPP_VERBOSE_ABORT_NOEXCEPT;
+    __printf__, 1, 2) void __libcpp_verbose_abort(const char* __format, ...) _NOEXCEPT;
 
 // _LIBCPP_VERBOSE_ABORT(format, args...)
 //
@@ -81,8 +73,6 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 void __use(const char*, ...);
 #    define _LIBCPP_VERBOSE_ABORT(...) (decltype(::std::__use(__VA_ARGS__))(), __builtin_abort())
 #  else
-
-
 #    define _LIBCPP_VERBOSE_ABORT(msg, ...) INTERNAL_abort_lambda(msg)
 #  endif
 
