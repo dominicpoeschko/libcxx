@@ -17,7 +17,7 @@
 #endif
 
 #if defined(__ELF__)
-#  define _LIBCPP_OBJECT_FORMAT_ELF 1
+//#  define _LIBCPP_OBJECT_FORMAT_ELF 1
 #elif defined(__MACH__)
 #  define _LIBCPP_OBJECT_FORMAT_MACHO 1
 #elif defined(_WIN32)

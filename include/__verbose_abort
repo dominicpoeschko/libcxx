@@ -19,8 +19,7 @@
 #  if _LIBCPP_AVAILABILITY_HAS_VERBOSE_ABORT
 
 namespace uc_log {
-template<int Line, typename Filename, typename Expr>
-extern void log_assert();
+extern void log_assert(int Line, const char* Filename, const char* Expr);
 }
 
 #define INTERNAL_abort_lambda(x)                                  \
@@ -29,16 +28,10 @@ extern void log_assert();
             int DO_NOT_USE_see_assert[1];                         \
             DO_NOT_USE_see_assert[1] = 0;                         \
         } else {                                                  \
-            uc_log::log_assert<                                   \
+            uc_log::log_assert(                                   \
               __LINE__,                                           \
-              decltype([]() {                                     \
-                  constexpr auto f{__FILE_NAME__};                \
-                  return f;                                       \
-              }),                                                 \
-              decltype([]() {                                     \
-                  constexpr auto e{"abort(" #x ")"};              \
-                  return e;                                       \
-              })>();                                              \
+              __FILE_NAME__,                                      \
+              #x);                                                \
             while(true) {                                         \
                 asm("bkpt 5" : : :);                              \
             }                                                     \
