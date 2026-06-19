@@ -72,12 +72,14 @@ set(LIBCXX_SOURCE_FILES
 
 set(libcxx_flags
     -D_LIBCPP_BUILDING_LIBRARY
+    -D_LIBCPP_AVAILABILITY_MINIMUM_HEADER_VERSION=22
     -Wno-reserved-id-macro
     -Wno-atomic-alignment
     -Wno-tautological-type-limit-compare
     -Wno-double-promotion
     -Wno-unused-parameter
     -Wno-sign-conversion
+    -Wno-shorten-64-to-32
     -Wno-unsafe-buffer-usage
     -Wno-ctad-maybe-unsupported
     -Wno-covered-switch-default

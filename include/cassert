@@ -16,39 +16,20 @@ Macros:
 
 */
 
-#include <__assert>   // all public C++ headers provide the assertion handler
-#include <__config>
-//#include <assert.h>
-namespace uc_log {
-template<int Line, typename Filename, typename Expr>
-extern void log_assert();
-}
+#if __cplusplus < 201103L && defined(_LIBCPP_USE_FROZEN_CXX03_HEADERS)
+#  include <__cxx03/cassert>
+#else
+#  include <__config>
 
-#define INTERNAL_assert_lambda(x)                                 \
-    []() __attribute__((__noreturn__)) {                          \
-        if(__builtin_is_constant_evaluated()) {                   \
-            int DO_NOT_USE_see_assert[1];                         \
-            DO_NOT_USE_see_assert[1] = 0;                         \
-        } else {                                                  \
-            uc_log::log_assert<                                   \
-              __LINE__,                                           \
-              decltype([]() {                                     \
-                  constexpr auto f{__FILE_NAME__};                \
-                  return f;                                       \
-              }),                                                 \
-              decltype([]() {                                     \
-                  constexpr auto e{"assert(" #x ")"};             \
-                  return e;                                       \
-              })>();                                              \
-            while(true) {                                         \
-                asm("bkpt 5" : : :);                              \
-            }                                                     \
-        }                                                         \
-    }                                                             \
-    ()
+// <assert.h> is not provided by libc++
+#  if __has_include(<assert.h>)
+#    include <assert.h>
+#    ifdef _LIBCPP_ASSERT_H
+#      error "If libc++ starts defining <assert.h>, the __has_include check should move to libc++'s <assert.h>"
+#    endif
+#  endif
 
-#define assert(x) ((void)((__builtin_expect(!!(x), true)) || (INTERNAL_assert_lambda(x), 0)))
-
-#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-    #pragma GCC system_header
-#endif
+#  if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#    pragma GCC system_header
+#  endif
+#endif // __cplusplus < 201103L && defined(_LIBCPP_USE_FROZEN_CXX03_HEADERS)
