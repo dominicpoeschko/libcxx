@@ -85,6 +85,18 @@ set(libcxx_flags
     -Wno-covered-switch-default
     -Wno-missing-noreturn)
 
+# gcc-specific warnings in upstream code
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    list(APPEND libcxx_flags -Wno-strict-aliasing -Wno-cast-align -Wno-strict-overflow -Wno-attributes)
+endif()
+
+# charconv.cpp needs llvm-libc's header-only shared/ tree; -idirafter keeps
+# llvm-libc's libc headers from shadowing newlib's.
+if(NOT "${CLIB}" STREQUAL "llvm")
+    list(APPEND libcxx_flags -idirafter${CMAKE_CURRENT_LIST_DIR}/../libc/include
+         -idirafter${CMAKE_CURRENT_LIST_DIR}/../libc -DLIBC_NAMESPACE=__llvm_libc)
+endif()
+
 list(JOIN libcxx_flags " " LIBCXX_FLAGS)
 
 list(TRANSFORM LIBCXX_SOURCE_FILES PREPEND "${CMAKE_CURRENT_LIST_DIR}/")
