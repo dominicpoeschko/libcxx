@@ -62,6 +62,7 @@ set(LIBCXX_SOURCE_FILES
     # src/support/win32/support.cpp
     # src/support/win32/thread_win32.cpp
     # src/system_error.cpp
+    # src/text_encoding.cpp
     # src/thread.cpp
     # src/typeinfo.cpp
     # src/valarray.cpp
@@ -83,7 +84,11 @@ set(libcxx_flags
     -Wno-unsafe-buffer-usage
     -Wno-ctad-maybe-unsupported
     -Wno-covered-switch-default
-    -Wno-missing-noreturn)
+    -Wno-missing-noreturn
+    # libc++ 23's _LIBCPP_BEGIN/END_NAMESPACE_STD push an ABI-annotation attribute region; in the library's own
+    # sources (not system headers there) clang reports the region's unused attributes where it ends.
+    -Wno-pragma-clang-attribute
+    -Wno-ignored-attributes)
 
 # gcc-specific warnings in upstream code
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
