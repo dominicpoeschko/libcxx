@@ -22,6 +22,16 @@ namespace uc_log {
 extern void log_assert(int Line, const char* Filename, const char* Expr);
 }
 
+// Kvasir_SDK kvasir/Util/Panic.hpp: every fatal path ends in raise(); Cause::assertion is 0 and
+// the underlying type unsigned char, fixed on both sides.
+#ifndef KVASIR_PANIC_RAISE_DECLARED
+#define KVASIR_PANIC_RAISE_DECLARED 1
+namespace Kvasir { namespace Panic {
+enum class Cause : unsigned char;
+[[noreturn]] void raise(Cause);
+}}
+#endif
+
 #define INTERNAL_abort_lambda(x)                                  \
     []() __attribute__((__noreturn__)) {                          \
         if(__builtin_is_constant_evaluated()) {                   \
@@ -32,9 +42,8 @@ extern void log_assert(int Line, const char* Filename, const char* Expr);
               __LINE__,                                           \
               __FILE_NAME__,                                      \
               #x);                                                \
-            while(true) {                                         \
-                asm("bkpt 5" : : :);                              \
-            }                                                     \
+            ::Kvasir::Panic::raise(                               \
+              static_cast<::Kvasir::Panic::Cause>(0));            \
         }                                                         \
     }                                                             \
     ()
