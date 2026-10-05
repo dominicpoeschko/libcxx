@@ -47,7 +47,23 @@
 #    define _LIBCPP_ASSERTION_HANDLER(message) _LIBCPP_VERBOSE_TRAP(message)
 
 #  elif _LIBCPP_ASSERTION_SEMANTIC == _LIBCPP_ASSERTION_SEMANTIC_ENFORCE
-#    define _LIBCPP_ASSERTION_HANDLER(message) _LIBCPP_VERBOSE_ABORT("%s", message)
+#    if defined(INTERNAL_abort_lambda)
+// Kvasir (its __verbose_abort is in use): the message - one literal with libc++'s file, line and the failed
+// condition (<__assert>) - goes to uc_log::log_assert. Not via _LIBCPP_VERBOSE_ABORT("%s", message): the patched
+// macro logs the text of its first argument.
+#      define _LIBCPP_ASSERTION_HANDLER(message)                                                                \
+        ([]() __attribute__((__noreturn__)) {                                                                  \
+          if (__builtin_is_constant_evaluated()) {                                                             \
+            int DO_NOT_USE_see_assert[1];                                                                      \
+            DO_NOT_USE_see_assert[1] = 0;                                                                      \
+          } else {                                                                                             \
+            uc_log::log_assert(__LINE__, __FILE_NAME__, message);                                              \
+            ::Kvasir::Panic::raise(static_cast<::Kvasir::Panic::Cause>(0));                                    \
+          }                                                                                                    \
+        }())
+#    else
+#      define _LIBCPP_ASSERTION_HANDLER(message) _LIBCPP_VERBOSE_ABORT("%s", message)
+#    endif
 
 #  else
 
