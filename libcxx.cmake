@@ -72,6 +72,7 @@ set(LIBCXX_SOURCE_FILES
     )
 
 set(libcxx_flags
+    -ffreestanding
     -D_LIBCPP_BUILDING_LIBRARY
     -D_LIBCPP_AVAILABILITY_MINIMUM_HEADER_VERSION=22
     -Wno-reserved-id-macro
