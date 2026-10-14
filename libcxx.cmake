@@ -75,25 +75,31 @@ set(libcxx_flags
     -ffreestanding
     -D_LIBCPP_BUILDING_LIBRARY
     -D_LIBCPP_AVAILABILITY_MINIMUM_HEADER_VERSION=22
-    -Wno-reserved-id-macro
-    -Wno-atomic-alignment
-    -Wno-tautological-type-limit-compare
     -Wno-double-promotion
     -Wno-unused-parameter
     -Wno-sign-conversion
-    -Wno-shorten-64-to-32
-    -Wno-unsafe-buffer-usage
     -Wno-ctad-maybe-unsupported
-    -Wno-covered-switch-default
     -Wno-missing-noreturn
-    # libc++ 23's _LIBCPP_BEGIN/END_NAMESPACE_STD push an ABI-annotation attribute region; in the library's own
-    # sources (not system headers there) clang reports the region's unused attributes where it ends.
-    -Wno-pragma-clang-attribute
     -Wno-ignored-attributes)
 
-# gcc-specific warnings in upstream code
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    list(APPEND libcxx_flags -Wno-strict-aliasing -Wno-cast-align -Wno-strict-overflow -Wno-attributes)
+    # gcc-specific warnings in upstream code; gcc does not know libc++'s `#pragma clang attribute` regions
+    # (_LIBCPP_BEGIN/END_NAMESPACE_STD), and an unknown -Wno-* is noted on every file that warns.
+    list(APPEND libcxx_flags -Wno-strict-aliasing -Wno-cast-align -Wno-strict-overflow -Wno-attributes
+         -Wno-unknown-pragmas)
+else()
+    list(
+        APPEND
+        libcxx_flags
+        -Wno-reserved-id-macro
+        -Wno-atomic-alignment
+        -Wno-tautological-type-limit-compare
+        -Wno-shorten-64-to-32
+        -Wno-unsafe-buffer-usage
+        -Wno-covered-switch-default
+        # libc++ 23's _LIBCPP_BEGIN/END_NAMESPACE_STD push an ABI-annotation attribute region; in the library's
+        # own sources (not system headers there) clang reports the region's unused attributes where it ends.
+        -Wno-pragma-clang-attribute)
 endif()
 
 # charconv.cpp needs llvm-libc's header-only shared/ tree; -idirafter keeps
