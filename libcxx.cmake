@@ -1,10 +1,10 @@
 set(LIBCXX_SOURCE_FILES
-    # src/algorithm.cpp
+    src/algorithm.cpp
     # src/any.cpp
     # src/atomic.cpp
     # src/barrier.cpp
     # src/bind.cpp
-    # src/call_once.cpp
+    src/call_once.cpp
     src/charconv.cpp
     # src/chrono.cpp
     # src/condition_variable.cpp
@@ -28,7 +28,7 @@ set(LIBCXX_SOURCE_FILES
     # src/fstream.cpp
     # src/functional.cpp
     # src/future.cpp
-    # src/hash.cpp
+    src/hash.cpp
     # src/ios.cpp
     # src/ios.instantiations.cpp
     # src/iostream.cpp
@@ -71,35 +71,28 @@ set(LIBCXX_SOURCE_FILES
     # src/verbose_abort.cpp
     )
 
+# The headers and the library always come from the same port, so the oldest headers the library serves are its own
+# release: the LLVM major of UPSTREAM (written by tools/llvm_port/libcport), and no compatibility symbols for older ones.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/UPSTREAM)
+file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/UPSTREAM libcxx_upstream LIMIT_COUNT 1)
+if(NOT libcxx_upstream MATCHES "^llvmorg-([0-9]+)\\.")
+    message(FATAL_ERROR "lib/libcxx/UPSTREAM: no llvmorg-<major>. tag in '${libcxx_upstream}'")
+endif()
+
 set(libcxx_flags
     -ffreestanding
     -D_LIBCPP_BUILDING_LIBRARY
-    -D_LIBCPP_AVAILABILITY_MINIMUM_HEADER_VERSION=22
-    -Wno-double-promotion
-    -Wno-unused-parameter
-    -Wno-sign-conversion
-    -Wno-ctad-maybe-unsupported
-    -Wno-missing-noreturn
-    -Wno-ignored-attributes)
+    -D_LIBCPP_AVAILABILITY_MINIMUM_HEADER_VERSION=${CMAKE_MATCH_1})
 
+# libc++ compiles with the compiler's default warnings (Kvasir's warning list is the image's own, kvasir::warnings);
+# two of them fire in upstream code. clang: libc++ 23's _LIBCPP_BEGIN/END_NAMESPACE_STD push an ABI-annotation
+# attribute region, and in the library's own sources (not system headers there) clang reports the region's unused
+# attributes where it ends. gcc: the always_inline helpers of src/include/to_chars_floating_point.h are not declared
+# inline.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # gcc-specific warnings in upstream code; gcc does not know libc++'s `#pragma clang attribute` regions
-    # (_LIBCPP_BEGIN/END_NAMESPACE_STD), and an unknown -Wno-* is noted on every file that warns.
-    list(APPEND libcxx_flags -Wno-strict-aliasing -Wno-cast-align -Wno-strict-overflow -Wno-attributes
-         -Wno-unknown-pragmas)
+    list(APPEND libcxx_flags -Wno-attributes)
 else()
-    list(
-        APPEND
-        libcxx_flags
-        -Wno-reserved-id-macro
-        -Wno-atomic-alignment
-        -Wno-tautological-type-limit-compare
-        -Wno-shorten-64-to-32
-        -Wno-unsafe-buffer-usage
-        -Wno-covered-switch-default
-        # libc++ 23's _LIBCPP_BEGIN/END_NAMESPACE_STD push an ABI-annotation attribute region; in the library's
-        # own sources (not system headers there) clang reports the region's unused attributes where it ends.
-        -Wno-pragma-clang-attribute)
+    list(APPEND libcxx_flags -Wno-ignored-attributes -Wno-pragma-clang-attribute)
 endif()
 
 # charconv.cpp needs llvm-libc's header-only shared/ tree; -idirafter keeps
